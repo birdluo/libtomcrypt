@@ -61,6 +61,33 @@ void print_hex(const char* what, const void* v, const unsigned long l)
   }
 }
 
+/* https://stackoverflow.com/a/23898449 */
+unsigned long scan_hex(const char* str, unsigned char* bytes, unsigned long blen)
+{
+   unsigned long pos, str_len;
+   unsigned char idx0;
+   unsigned char idx1;
+
+   const unsigned char hashmap[] = {
+         0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, /* 01234567 */
+         0x08, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 89:;<=>? */
+         0x00, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x00, /* @ABCDEFG */
+         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* HIJKLMNO */
+         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* PQRSTUVW */
+         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* XYZ[\]^_ */
+         0x00, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x00, /* `abcdefg */
+   };
+   if (str == NULL)
+      return 0;
+   str_len = strlen(str);
+   for (pos = 0; ((pos + 1 < (blen * 2)) && (pos + 1 < str_len)); pos += 2) {
+      idx0 = (unsigned char) (str[pos + 0] & 0x1F) ^ 0x10;
+      idx1 = (unsigned char) (str[pos + 1] & 0x1F) ^ 0x10;
+      bytes[pos / 2] = (unsigned char) (hashmap[idx0] << 4) | hashmap[idx1];
+   }
+   return pos / 2;
+}
+
 int do_compare_testvector(const void* is, const unsigned long is_len, const void* should, const unsigned long should_len, const char* what, int which)
 {
    if (compare_testvector(is, is_len, should, should_len, what, which) == 0) {
